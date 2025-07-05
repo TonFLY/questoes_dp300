@@ -1,0 +1,252 @@
+import { useEffect, useState } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../services/firebase';
+
+// Importar utilitário de limpeza
+import { limpezaCompleta } from '../utils/limpeza';
+
+export default function Dashboard() {
+  const { currentUser, logout } = useAuth();
+  const [stats, setStats] = useState({
+    totalQuestions: 0,
+    correctAnswers: 0,
+    wrongAnswers: 0,
+    accuracy: 0
+  });
+  const [wrongQuestions, setWrongQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Expor função de limpeza no console para emergências
+  useEffect(() => {
+    if (currentUser) {
+      window.limparDadosUsuario = () => limpezaCompleta(currentUser.uid);
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    async function loadUserStats() {
+      if (!currentUser) return;
+
+      try {
+        // Buscar histórico de tentativas do usuário (todas as respostas)
+        const attemptsRef = collection(db, 'usuarios', currentUser.uid, 'tentativas');
+        const attemptsSnapshot = await getDocs(attemptsRef);
+        
+        // Buscar respostas únicas (para questões erradas)
+        const answersRef = collection(db, 'usuarios', currentUser.uid, 'respostas');
+        const answersSnapshot = await getDocs(answersRef);
+        
+        let correct = 0;
+        let wrong = 0;
+        const wrongQuestionsList = [];
+
+        // Contar todas as tentativas (incluindo múltiplas da mesma questão)
+        attemptsSnapshot.forEach(doc => {
+          const attempt = doc.data();
+          if (attempt.correct) {
+            correct++;
+          } else {
+            wrong++;
+          }
+        });
+
+        // Questões para revisão (apenas as que ainda estão erradas)
+        answersSnapshot.forEach(doc => {
+          const answer = doc.data();
+          if (!answer.correct) {
+            wrongQuestionsList.push({
+              id: doc.id,
+              ...answer
+            });
+          }
+        });
+
+        const total = correct + wrong;
+        const accuracy = total > 0 ? (correct / total) * 100 : 0;
+
+        setStats({
+          totalQuestions: total,
+          correctAnswers: correct,
+          wrongAnswers: wrong,
+          accuracy: accuracy
+        });
+
+        setWrongQuestions(wrongQuestionsList);
+        setLoading(false);
+      } catch (error) {
+        console.error('Erro ao carregar estatísticas:', error);
+        setLoading(false);
+      }
+    }
+
+    loadUserStats();
+  }, [currentUser]);
+
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="dashboard-layout">
+      {/* Header */}
+      <header className="dashboard-header">
+        <div className="container">
+          <div className="dashboard-nav">
+            <div>
+              <h1 className="dashboard-title">Dashboard</h1>
+              <p className="dashboard-subtitle">Bem-vindo, {currentUser?.displayName || currentUser?.email}!</p>
+            </div>
+            <div className="nav-actions">
+              <button
+                onClick={() => window.location.href = '/questoes'}
+                className="btn btn-primary"
+              >
+                Resolver Questões
+              </button>
+              
+              <button
+                onClick={() => window.location.href = '/admin'}
+                className="btn btn-secondary"
+              >
+                Criar Questões
+              </button>
+              
+              <button
+                onClick={logout}
+                className="btn btn-secondary"
+              >
+                Sair
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="dashboard-main">
+        {/* Statistics Cards */}
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-content">
+              <div className="stat-icon primary">
+                <span className="stat-icon">📚</span>
+              </div>
+              <div className="stat-info">
+                <p className="stat-label">Total de Tentativas</p>
+                <p className="stat-value">{stats.totalQuestions}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-content">
+              <div className="stat-icon success">
+                <span className="stat-icon text-green-600">✅</span>
+              </div>
+              <div className="stat-info">
+                <p className="stat-label">Acertos</p>
+                <p className="stat-value">{stats.correctAnswers}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-content">
+              <div className="stat-icon error">
+                <span className="stat-icon text-red-600">❌</span>
+              </div>
+              <div className="stat-info">
+                <p className="stat-label">Erros</p>
+                <p className="stat-value">{stats.wrongAnswers}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-content">
+              <div className="stat-icon info">
+                <span className="stat-icon">📊</span>
+              </div>
+              <div className="stat-info">
+                <p className="stat-label">Taxa de Acerto</p>
+                <p className="stat-value">{stats.accuracy.toFixed(1)}%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Wrong Questions Review */}
+        {wrongQuestions.length > 0 && (
+          <div className="card">
+            <div className="card-header">
+              <div className="flex items-center">
+                <span className="dashboard-icon">🕒</span>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Questões para Revisão ({wrongQuestions.length})
+                </h2>
+              </div>
+            </div>
+            
+            <div className="card-body">
+              <div className="space-y-4">
+                {wrongQuestions.slice(0, 5).map((question, index) => (
+                  <div key={question.id} className="question-review-item">
+                    <p className="question-number">Questão {index + 1}</p>
+                    <p className="question-text">{question.questionText || 'Questão sem texto'}</p>
+                    <p className="question-result">
+                      Sua resposta: {question.selectedAnswer} | Correta: {question.correctAnswer}
+                    </p>
+                  </div>
+                ))}
+                
+                {wrongQuestions.length > 5 && (
+                  <button 
+                    onClick={() => window.location.href = '/revisao'}
+                    className="text-primary-600 hover:text-primary-500 text-sm font-medium"
+                  >
+                    Ver todas as {wrongQuestions.length} questões para revisão →
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Actions */}
+        <div className="actions-grid">
+          <button 
+            onClick={() => window.location.href = '/questoes'}
+            className="action-card"
+          >
+            <span className="action-icon">📚</span>
+            <h3 className="action-title">Resolver Questões</h3>
+            <p className="action-description">Pratique com questões da certificação DP-300</p>
+          </button>
+
+          <button 
+            onClick={() => window.location.href = '/revisao'}
+            className="action-card"
+          >
+            <span className="action-icon">🕒</span>
+            <h3 className="action-title">Revisar Erros</h3>
+            <p className="action-description">Revise questões que você errou anteriormente</p>
+          </button>
+
+          <button 
+            onClick={() => window.location.href = '/estatisticas'}
+            className="action-card"
+          >
+            <span className="action-icon">📊</span>
+            <h3 className="action-title">Estatísticas</h3>
+            <p className="action-description">Veja seu progresso detalhado por tópico</p>
+          </button>
+        </div>
+      </main>
+    </div>
+  );
+}
