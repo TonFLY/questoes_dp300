@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { collection, getDocs, doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
+import { PageTitle } from '../components/PageTitle';
 import { 
   ChevronLeftIcon, 
   ChevronRightIcon,
@@ -216,6 +217,7 @@ export default function Questoes() {
 
   return (
     <div className="questions-layout">
+      <PageTitle title="DP-300 | Questões" />
       {/* Header */}
       <header className="questions-header">
         <div className="container">

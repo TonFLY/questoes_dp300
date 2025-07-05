@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../services/firebase';
+import { PageTitle } from '../components/PageTitle';
 
 // Importar utilitário de limpeza
 import { limpezaCompleta } from '../utils/limpeza';
@@ -93,6 +94,7 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-layout">
+      <PageTitle title="DP-300 | Dashboard" />
       {/* Header */}
       <header className="dashboard-header">
         <div className="container">
@@ -129,6 +131,8 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <main className="dashboard-main">
+        <PageTitle title="Dashboard" />
+
         {/* Statistics Cards */}
         <div className="stats-grid">
           <div className="stat-card">

@@ -3,6 +3,7 @@ import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'firebase
 import { db } from '../services/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { Link } from 'react-router-dom';
+import { PageTitle } from '../components/PageTitle';
 
 const Admin = () => {
   const { currentUser } = useAuth();
@@ -176,20 +177,23 @@ const Admin = () => {
 
   return (
     <div className="container">
+      <PageTitle title="DP-300 | Admin" />
+      
       <div className="page-header">
         <h1>Gerenciar Questões</h1>
         <p>Crie, edite e exclua questões do sistema</p>
-        <div className="page-actions">
-          <Link to="/dashboard" className="btn btn-secondary">
-            🏠 Voltar ao Dashboard
-          </Link>
-          <button 
-            onClick={() => setShowForm(!showForm)}
-            className="btn btn-primary"
-          >
-            {showForm ? '❌ Cancelar' : '➕ Nova Questão'}
-          </button>
-        </div>
+      </div>
+      
+      <div className="page-actions">
+        <Link to="/dashboard" className="btn btn-secondary">
+          🏠 Voltar ao Dashboard
+        </Link>
+        <button 
+          onClick={() => setShowForm(!showForm)}
+          className="btn btn-primary"
+        >
+          {showForm ? '❌ Cancelar' : '➕ Nova Questão'}
+        </button>
       </div>
 
       {error && (

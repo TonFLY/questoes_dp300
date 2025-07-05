@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { Link } from 'react-router-dom';
+import { PageTitle } from '../components/PageTitle';
 
 export default function Revisao() {
   const { currentUser } = useAuth();
@@ -193,6 +194,7 @@ export default function Revisao() {
 
   return (
     <div className="container">
+      <PageTitle title="DP-300 | Revisão" />
       <div className="page-header">
         <div>
           <h1>Área de Revisão</h1>
