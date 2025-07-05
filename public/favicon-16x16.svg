@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+  <!-- Fundo circular azul -->
+  <circle cx="8" cy="8" r="8" fill="#0078D4"/>
+  
+  <!-- Símbolo de pergunta estilizado -->
+  <path d="M8 2c-2.2 0-4 1.8-4 4h1.5c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5c0 1-0.6 1.9-1.5 2.3v1.2h1.5v-0.8c1.2-0.6 2-1.8 2-3.2 0-2.2-1.8-4-4-4z" fill="white"/>
+  <circle cx="8" cy="12" r="0.8" fill="white"/>
+</svg>
