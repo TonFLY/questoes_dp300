@@ -25,6 +25,10 @@ function ProtectedRoute({ children }) {
 
 // Componente para redirecionar usuários logados
 function PublicRoute({ children }) {
+  const { currentUser } = useAuth();
+  return !currentUser ? children : <Navigate to="/dashboard" />;
+}
+
 function AppRoutes() {
   console.log('🗺️ AppRoutes renderizando');
   return (
@@ -74,10 +78,6 @@ function App() {
           <AppRoutes />
           <InstallPrompt />
         </AuthProvider>
-      </Router>
-    </ErrorBoundary>
-  );
-}       </AuthProvider>
       </Router>
     </ErrorBoundary>
   );
