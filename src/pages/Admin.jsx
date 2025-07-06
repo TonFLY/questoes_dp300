@@ -15,7 +15,7 @@ const Admin = () => {
     titulo: '',
     enunciado: '',
     alternativas: ['', ''],
-    respostaCorreta: 0,
+    respostasCorretas: [], // Mudança: array ao invés de número único
     categoria: '',
     nivel: 'medio',
     tags: '',
@@ -52,7 +52,7 @@ const Admin = () => {
       titulo: '',
       enunciado: '',
       alternativas: ['', ''],
-      respostaCorreta: 0,
+      respostasCorretas: [],
       categoria: '',
       nivel: 'medio',
       tags: '',
@@ -72,14 +72,22 @@ const Admin = () => {
       return;
     }
 
+    if (formData.respostasCorretas.length === 0) {
+      setError('Por favor, selecione pelo menos uma alternativa correta');
+      return;
+    }
+
     try {
       setLoading(true);
       const questaoData = {
         ...formData,
         alternativas: formData.alternativas.filter(alt => alt.trim()),
         tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-        // Converter resposta correta de número para letra
-        respostaCorreta: String.fromCharCode(65 + formData.respostaCorreta),
+        // Manter compatibilidade com formato antigo
+        respostaCorreta: formData.respostasCorretas.length === 1 
+          ? String.fromCharCode(65 + formData.respostasCorretas[0])
+          : null, // Para múltiplas respostas, será null
+        respostasCorretas: formData.respostasCorretas.map(index => String.fromCharCode(65 + index)),
         criadoPor: currentUser.uid,
         criadoEm: new Date()
       };
@@ -103,14 +111,23 @@ const Admin = () => {
   };
 
   const handleEdit = (questao) => {
+    // Converter respostaCorreta antiga (único valor) para array se necessário
+    let respostasCorretas = [];
+    if (questao.respostasCorretas && Array.isArray(questao.respostasCorretas)) {
+      respostasCorretas = questao.respostasCorretas;
+    } else if (questao.respostaCorreta !== undefined) {
+      // Compatibilidade com formato antigo
+      const index = typeof questao.respostaCorreta === 'string' 
+        ? questao.respostaCorreta.charCodeAt(0) - 65 
+        : questao.respostaCorreta;
+      respostasCorretas = [index];
+    }
+    
     setFormData({
       titulo: questao.titulo,
       enunciado: questao.enunciado,
       alternativas: questao.alternativas,
-      // Converter resposta correta de letra para número
-      respostaCorreta: typeof questao.respostaCorreta === 'string' 
-        ? questao.respostaCorreta.charCodeAt(0) - 65 
-        : questao.respostaCorreta,
+      respostasCorretas: respostasCorretas,
       categoria: questao.categoria,
       nivel: questao.nivel,
       tags: questao.tags?.join(', ') || '',
@@ -278,19 +295,31 @@ const Admin = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="respostaCorreta">Resposta Correta *</label>
-                <select
-                  id="respostaCorreta"
-                  value={formData.respostaCorreta}
-                  onChange={(e) => setFormData({...formData, respostaCorreta: parseInt(e.target.value)})}
-                  className="form-control"
-                >
-                  {formData.alternativas.map((_, index) => (
-                    <option key={index} value={index}>
-                      {String.fromCharCode(65 + index)} - {formData.alternativas[index] || `Alternativa ${String.fromCharCode(65 + index)}`}
-                    </option>
+                <label>Respostas Corretas * (selecione uma ou mais)</label>
+                <div className="checkbox-group">
+                  {formData.alternativas.map((alternativa, index) => (
+                    <div key={index} className="checkbox-item">
+                      <input
+                        type="checkbox"
+                        id={`resposta-${index}`}
+                        checked={formData.respostasCorretas.includes(index)}
+                        onChange={(e) => {
+                          const novasRespostas = e.target.checked
+                            ? [...formData.respostasCorretas, index]
+                            : formData.respostasCorretas.filter(i => i !== index);
+                          setFormData({...formData, respostasCorretas: novasRespostas});
+                        }}
+                        className="form-checkbox"
+                      />
+                      <label htmlFor={`resposta-${index}`} className="checkbox-label">
+                        <strong>{String.fromCharCode(65 + index)}</strong> - {alternativa || `Alternativa ${String.fromCharCode(65 + index)}`}
+                      </label>
+                    </div>
                   ))}
-                </select>
+                </div>
+                {formData.respostasCorretas.length === 0 && (
+                  <small className="text-danger">Selecione pelo menos uma alternativa correta</small>
+                )}
               </div>
 
               <div className="form-row">

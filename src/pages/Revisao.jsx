@@ -85,15 +85,48 @@ export default function Revisao() {
 
   async function handleAnswerSubmit(questionId, questionData) {
     const selectedAnswer = selectedAnswers[questionId];
-    if (!selectedAnswer) return;
+    if (!selectedAnswer || (Array.isArray(selectedAnswer) && selectedAnswer.length === 0)) return;
 
     try {
       console.log('Debug - selectedAnswer:', selectedAnswer);
       console.log('Debug - correctAnswer:', questionData.correctAnswer);
       console.log('Debug - questionData:', questionData);
       
-      const isCorrect = selectedAnswer === questionData.correctAnswer;
-      console.log('Debug - isCorrect:', isCorrect);
+      // Verificar se a resposta está correta (suporte a múltiplas respostas)
+      let isCorrect = false;
+      
+      if (Array.isArray(selectedAnswer)) {
+        // Questão de múltipla escolha - comparar arrays
+        let correctAnswers = [];
+        
+        // Determinar o formato das respostas corretas
+        if (questionData.respostasCorretas && Array.isArray(questionData.respostasCorretas)) {
+          correctAnswers = questionData.respostasCorretas;
+        } else if (Array.isArray(questionData.correctAnswer)) {
+          correctAnswers = questionData.correctAnswer;
+        } else if (questionData.correctAnswer) {
+          correctAnswers = [questionData.correctAnswer];
+        }
+        
+        // Verificar se todas as respostas selecionadas estão corretas e se não faltou nenhuma
+        isCorrect = selectedAnswer.length === correctAnswers.length &&
+                   selectedAnswer.every(answer => correctAnswers.includes(answer)) &&
+                   correctAnswers.every(answer => selectedAnswer.includes(answer));
+      } else {
+        // Questão de única escolha
+        if (questionData.respostasCorretas && Array.isArray(questionData.respostasCorretas)) {
+          // Novo formato: múltiplas respostas corretas
+          isCorrect = questionData.respostasCorretas.includes(selectedAnswer);
+        } else if (Array.isArray(questionData.correctAnswer)) {
+          // Formato antigo: múltiplas respostas corretas
+          isCorrect = questionData.correctAnswer.includes(selectedAnswer);
+        } else if (questionData.correctAnswer) {
+          // Formato muito antigo: uma resposta correta
+          isCorrect = selectedAnswer === questionData.correctAnswer;
+        }
+      }
+        
+        console.log('Debug - isCorrect:', isCorrect);
       
       // Salvar tentativa no histórico (sempre salva)
       const attemptData = {
@@ -184,6 +217,59 @@ export default function Revisao() {
     return null;
   }
 
+  // Funções para lidar com múltiplas seleções
+  function isMultipleChoice(question) {
+    // Verificar novo formato (respostasCorretas)
+    if (question.respostasCorretas && Array.isArray(question.respostasCorretas)) {
+      return question.respostasCorretas.length > 1;
+    }
+    // Verificar formato antigo (correctAnswer como array)
+    if (Array.isArray(question.correctAnswer)) {
+      return question.correctAnswer.length > 1;
+    }
+    // Formato muito antigo ou questão de resposta única
+    return false;
+  }
+  
+  function handleMultipleSelection(questionId, letter) {
+    setSelectedAnswers(prev => {
+      const currentAnswers = prev[questionId] || [];
+      const isSelected = Array.isArray(currentAnswers) 
+        ? currentAnswers.includes(letter)
+        : currentAnswers === letter;
+      
+      if (isSelected) {
+        // Remover seleção
+        return {
+          ...prev,
+          [questionId]: Array.isArray(currentAnswers)
+            ? currentAnswers.filter(answer => answer !== letter)
+            : ''
+        };
+      } else {
+        // Adicionar seleção
+        return {
+          ...prev,
+          [questionId]: Array.isArray(currentAnswers)
+            ? [...currentAnswers, letter]
+            : [letter]
+        };
+      }
+    });
+  }
+  
+  function handleSingleSelection(questionId, letter) {
+    setSelectedAnswers(prev => ({ ...prev, [questionId]: letter }));
+  }
+  
+  function isAnswerSelected(questionId, letter) {
+    const selected = selectedAnswers[questionId];
+    if (Array.isArray(selected)) {
+      return selected.includes(letter);
+    }
+    return selected === letter;
+  }
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -272,10 +358,33 @@ export default function Revisao() {
                 <p className="question-text">{question.questionText}</p>
 
                 <div className="question-alternatives">
+                  {/* Indicador de múltipla escolha */}
+                  {isMultipleChoice(question) && (
+                    <div className="multiple-choice-indicator">
+                      📝 <strong>Múltipla escolha:</strong> Selecione todas as alternativas corretas
+                    </div>
+                  )}
+                  
                   {question.alternatives?.map((alternative, altIndex) => {
                     const letter = String.fromCharCode(65 + altIndex);
-                    const isSelected = selectedAnswers[question.id] === letter;
-                    const isCorrect = letter === question.correctAnswer;
+                    const isSelected = isAnswerSelected(question.id, letter);
+                    
+                    // Verificar se é correto (suporte a múltiplas respostas)
+                    let isCorrect = false;
+                    
+                    // Verificar novo formato primeiro (respostasCorretas)
+                    if (question.respostasCorretas && Array.isArray(question.respostasCorretas)) {
+                      isCorrect = question.respostasCorretas.includes(letter);
+                    } 
+                    // Verificar formato antigo (correctAnswer como array)
+                    else if (Array.isArray(question.correctAnswer)) {
+                      isCorrect = question.correctAnswer.includes(letter);
+                    } 
+                    // Formato muito antigo (correctAnswer como string)
+                    else if (question.correctAnswer) {
+                      isCorrect = letter === question.correctAnswer;
+                    }
+                    
                     const showResult = showResults[question.id];
                     const showCorrect = showResult && isCorrect;
                     const showIncorrect = showResult && isSelected && !isCorrect;
@@ -289,11 +398,19 @@ export default function Revisao() {
                     return (
                       <button
                         key={altIndex}
-                        onClick={() => !showResult && setSelectedAnswers(prev => ({ ...prev, [question.id]: letter }))}
+                        onClick={() => {
+                          if (!showResult) {
+                            if (isMultipleChoice(question)) {
+                              handleMultipleSelection(question.id, letter);
+                            } else {
+                              handleSingleSelection(question.id, letter);
+                            }
+                          }
+                        }}
                         disabled={showResult}
                         className={`revision-alternative ${isSelected ? 'selected' : ''} ${
                           showCorrect ? 'correct' : showIncorrect ? 'incorrect' : ''
-                        }`}
+                        } ${isMultipleChoice(question) ? 'multiple-choice' : ''}`}
                       >
                         <span className="alternative-letter">{letter}</span>
                         <span className="alternative-text">{alternative}</span>
@@ -312,7 +429,10 @@ export default function Revisao() {
                   {!showResults[question.id] ? (
                     <button
                       onClick={() => handleAnswerSubmit(question.id, question)}
-                      disabled={!selectedAnswers[question.id]}
+                      disabled={(() => {
+                        const selected = selectedAnswers[question.id];
+                        return !selected || (Array.isArray(selected) && selected.length === 0);
+                      })()}
                       className="btn btn-primary"
                     >
                       Confirmar Resposta
@@ -336,7 +456,11 @@ export default function Revisao() {
                 <div className="error-history">
                   <p className="error-summary">
                     📊 Sua resposta anterior: <strong>{question.selectedAnswer}</strong> | 
-                    Resposta correta: <strong>{question.correctAnswer}</strong> | 
+                    Resposta{Array.isArray(question.correctAnswer) && question.correctAnswer.length > 1 ? 's' : ''} correta{Array.isArray(question.correctAnswer) && question.correctAnswer.length > 1 ? 's' : ''}: <strong>
+                      {Array.isArray(question.correctAnswer) 
+                        ? question.correctAnswer.join(', ') 
+                        : question.correctAnswer}
+                    </strong> | 
                     Total de erros: <strong>{question.errorCount}</strong>
                   </p>
                 </div>

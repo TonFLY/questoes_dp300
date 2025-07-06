@@ -1142,35 +1142,6 @@ p {
   border-left: 4px solid var(--info-500);
 }
 
-.comment-title {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--info-700);
-  margin-bottom: var(--spacing-md);
-}
-
-.comment-text {
-  font-size: var(--font-size-base);
-  line-height: 1.6;
-  color: var(--text-primary);
-}
-
-.navigation-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-xl);
-  background: var(--bg-card);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-color);
-}
-
-.navigation-info {
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
 /* Admin Area Styles */
 .admin-layout {
   min-height: 100vh;
@@ -2010,4 +1981,114 @@ select.form-control {
   .question-meta {
     text-align: left;
   }
+}
+
+/* Checkbox para múltiplas respostas corretas */
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  transition: background-color 0.2s ease;
+}
+
+.checkbox-item:hover {
+  background-color: var(--bg-hover);
+}
+
+.form-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-600);
+  cursor: pointer;
+}
+
+.checkbox-label {
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  flex: 1;
+  margin: 0;
+}
+
+.checkbox-label strong {
+  color: var(--primary-600);
+  font-weight: 600;
+}
+
+.text-danger {
+  color: var(--danger-600);
+  font-size: var(--font-size-xs);
+  margin-top: var(--spacing-xs);
+}
+
+/* Indicação de múltipla escolha */
+.multiple-choice-notice {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  margin-top: var(--spacing-md);
+  background-color: var(--primary-50);
+  border: 1px solid var(--primary-200);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--primary-700);
+}
+
+.info-icon {
+  font-size: var(--font-size-lg);
+  flex-shrink: 0;
+}
+
+/* Estilos para múltipla escolha na revisão */
+.revision-alternative.multiple-choice {
+  position: relative;
+}
+
+.revision-alternative.multiple-choice::before {
+  content: "☐";
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+.revision-alternative.multiple-choice.selected::before {
+  content: "☑";
+  color: var(--primary-600);
+}
+
+.revision-alternative.multiple-choice .alternative-letter {
+  margin-left: 20px;
+}
+
+.multiple-choice-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--warning-50);
+  border: 1px solid var(--warning-200);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--warning-700);
+}
+
+.multiple-choice-indicator strong {
+  font-weight: 600;
 }

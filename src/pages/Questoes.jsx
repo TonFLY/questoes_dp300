@@ -19,7 +19,7 @@ export default function Questoes() {
   const { currentUser } = useAuth();
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState('');
+  const [selectedAnswers, setSelectedAnswers] = useState([]); // Mudança: array para múltiplas seleções
   const [showResult, setShowResult] = useState(false);
   const [showComment, setShowComment] = useState(false);
   const [userAnswers, setUserAnswers] = useState({});
@@ -27,6 +27,7 @@ export default function Questoes() {
   const [error, setError] = useState('');
 
   const currentQuestion = questions[currentQuestionIndex];
+  const isMultipleChoice = currentQuestion?.respostasCorretas && currentQuestion.respostasCorretas.length > 1;
 
   useEffect(() => {
     async function loadQuestionsOnMount() {
@@ -81,10 +82,14 @@ export default function Questoes() {
       // Carrega a resposta salva para a questão atual
       const savedAnswer = userAnswers[currentQuestion.id];
       if (savedAnswer) {
-        setSelectedAnswer(savedAnswer.selectedAnswer || '');
+        // Converter resposta salva para array se necessário
+        const savedAnswerArray = Array.isArray(savedAnswer.selectedAnswer) 
+          ? savedAnswer.selectedAnswer 
+          : [savedAnswer.selectedAnswer].filter(Boolean);
+        setSelectedAnswers(savedAnswerArray);
         setShowResult(savedAnswer.answered || false);
       } else {
-        setSelectedAnswer('');
+        setSelectedAnswers([]);
         setShowResult(false);
       }
       setShowComment(false);
@@ -92,10 +97,22 @@ export default function Questoes() {
   }, [currentQuestionIndex, currentQuestion, userAnswers]);
 
   async function handleAnswerSubmit() {
-    if (!selectedAnswer || !currentQuestion) return;
+    if (selectedAnswers.length === 0 || !currentQuestion) return;
 
     try {
-      const isCorrect = selectedAnswer === currentQuestion.respostaCorreta;
+      // Verificar se a resposta está correta (suporte a múltiplas respostas)
+      let isCorrect = false;
+      if (currentQuestion.respostasCorretas && currentQuestion.respostasCorretas.length > 0) {
+        // Formato novo: múltiplas respostas corretas
+        // Deve selecionar EXATAMENTE as respostas corretas (nem mais, nem menos)
+        const correctAnswers = [...currentQuestion.respostasCorretas].sort();
+        const userAnswers = [...selectedAnswers].sort();
+        isCorrect = correctAnswers.length === userAnswers.length && 
+                   correctAnswers.every((answer, index) => answer === userAnswers[index]);
+      } else if (currentQuestion.respostaCorreta) {
+        // Formato antigo: uma resposta correta
+        isCorrect = selectedAnswers.length === 1 && selectedAnswers[0] === currentQuestion.respostaCorreta;
+      }
       
       // Verificar se já existe resposta anterior para esta questão
       let existingAnswer = null;
@@ -111,8 +128,8 @@ export default function Questoes() {
       const answerData = {
         questionId: currentQuestion.id,
         questionText: currentQuestion.enunciado,
-        selectedAnswer: selectedAnswer,
-        correctAnswer: currentQuestion.respostaCorreta,
+        selectedAnswer: selectedAnswers,
+        correctAnswer: currentQuestion.respostasCorretas || [currentQuestion.respostaCorreta],
         correct: isCorrect,
         answeredAt: new Date(),
         alternatives: currentQuestion.alternativas,
@@ -124,8 +141,8 @@ export default function Questoes() {
       const attemptData = {
         questionId: currentQuestion.id,
         questionText: currentQuestion.enunciado,
-        selectedAnswer: selectedAnswer,
-        correctAnswer: currentQuestion.respostaCorreta,
+        selectedAnswer: selectedAnswers,
+        correctAnswer: currentQuestion.respostasCorretas || [currentQuestion.respostaCorreta],
         correct: isCorrect,
         answeredAt: new Date()
       };
@@ -174,10 +191,39 @@ export default function Questoes() {
   }
 
   function resetCurrentQuestion() {
-    setSelectedAnswer('');
+    setSelectedAnswers([]);
     setShowResult(false);
     setShowComment(false);
   }
+
+  // Função para lidar com seleção de respostas (única ou múltipla)
+  const handleAnswerSelection = (letter) => {
+    if (showResult) return;
+    
+    if (isMultipleChoice) {
+      // Múltipla escolha: toggle da seleção
+      setSelectedAnswers(prev => {
+        if (prev.includes(letter)) {
+          return prev.filter(ans => ans !== letter);
+        } else {
+          return [...prev, letter];
+        }
+      });
+    } else {
+      // Escolha única: substituir seleção
+      setSelectedAnswers([letter]);
+    }
+  };
+
+  // Função para verificar se uma resposta está selecionada
+  const isAnswerSelected = (letter) => {
+    return selectedAnswers.includes(letter);
+  };
+
+  // Função para verificar se há respostas selecionadas
+  const hasSelectedAnswers = () => {
+    return selectedAnswers.length > 0;
+  };
 
   if (loading) {
     return (
@@ -313,20 +359,34 @@ export default function Questoes() {
                 <div className="question-content">
                   <div className="question-statement">
                     <p>{currentQuestion.enunciado}</p>
+                    {isMultipleChoice && (
+                      <div className="multiple-choice-notice">
+                        <span className="info-icon">ℹ️</span>
+                        <span>Esta questão possui múltiplas respostas corretas. Selecione todas as alternativas corretas.</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="question-alternatives">
                     {currentQuestion.alternativas?.map((alternative, index) => {
                       const letter = String.fromCharCode(65 + index); // A, B, C, D...
-                      const isSelected = selectedAnswer === letter;
-                      const isCorrect = letter === currentQuestion.respostaCorreta;
+                      const isSelected = isAnswerSelected(letter);
+                      
+                      // Verificar se é correto (suporte a múltiplas respostas)
+                      let isCorrect = false;
+                      if (currentQuestion.respostasCorretas && currentQuestion.respostasCorretas.length > 0) {
+                        isCorrect = currentQuestion.respostasCorretas.includes(letter);
+                      } else if (currentQuestion.respostaCorreta) {
+                        isCorrect = letter === currentQuestion.respostaCorreta;
+                      }
+                      
                       const showCorrect = showResult && isCorrect;
                       const showIncorrect = showResult && isSelected && !isCorrect;
 
                       return (
                         <button
                           key={index}
-                          onClick={() => !showResult && setSelectedAnswer(letter)}
+                          onClick={() => !showResult && handleAnswerSelection(letter)}
                           disabled={showResult}
                           className={`alternative-button ${isSelected ? 'selected' : ''} ${
                             showCorrect ? 'correct' : showIncorrect ? 'incorrect' : ''
@@ -350,7 +410,7 @@ export default function Questoes() {
                     {!showResult ? (
                       <button
                         onClick={handleAnswerSubmit}
-                        disabled={!selectedAnswer}
+                        disabled={!hasSelectedAnswers()}
                         className="btn btn-primary"
                       >
                         Confirmar Resposta
