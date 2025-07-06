@@ -25,6 +25,7 @@ export default function Questoes() {
   const [userAnswers, setUserAnswers] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showMobileNav, setShowMobileNav] = useState(false); // Estado para controle da navegação mobile
 
   const currentQuestion = questions[currentQuestionIndex];
   const isMultipleChoice = currentQuestion?.respostasCorretas && currentQuestion.respostasCorretas.length > 1;
@@ -224,6 +225,28 @@ export default function Questoes() {
   const hasSelectedAnswers = () => {
     return selectedAnswers.length > 0;
   };
+
+  // useEffect para gerenciar tecla ESC na navegação mobile
+  useEffect(() => {
+    const handleEscKey = (event) => {
+      if (event.key === 'Escape' && showMobileNav) {
+        setShowMobileNav(false);
+      }
+    };
+
+    if (showMobileNav) {
+      document.addEventListener('keydown', handleEscKey);
+      // Prevenir scroll do body quando modal está aberto
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+      document.body.style.overflow = 'unset';
+    };
+  }, [showMobileNav]);
 
   if (loading) {
     return (
@@ -472,6 +495,66 @@ export default function Questoes() {
             </div>
           </main>
         </div>
+      </div>
+
+      {/* Indicador mobile de navegação */}
+      <div className="mobile-question-nav">
+        <div className="mobile-nav-indicator">
+          <span className="question-counter">
+            Questão {currentQuestionIndex + 1} de {questions.length}
+          </span>
+          <button 
+            className="mobile-nav-toggle"
+            onClick={() => setShowMobileNav(!showMobileNav)}
+          >
+            📋 Navegar
+          </button>
+        </div>
+        
+        {showMobileNav && (
+          <div className="mobile-nav-dropdown">
+            <div className="mobile-nav-overlay" onClick={() => setShowMobileNav(false)}></div>
+            <div className="mobile-nav-content">
+              <div className="mobile-nav-header">
+                <h3>Navegação das Questões</h3>
+                <button 
+                  className="mobile-nav-close"
+                  onClick={() => setShowMobileNav(false)}
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="mobile-questions-grid">
+                {questions.map((question, index) => {
+                  const userAnswer = userAnswers[question.id];
+                  const isAnswered = userAnswer?.answered;
+                  const isCorrect = userAnswer?.correct;
+                  const isCurrent = index === currentQuestionIndex;
+
+                  return (
+                    <button
+                      key={question.id}
+                      onClick={() => {
+                        goToQuestion(index);
+                        setShowMobileNav(false);
+                      }}
+                      className={`mobile-question-nav-item ${isCurrent ? 'current' : ''} ${
+                        isAnswered ? (isCorrect ? 'correct' : 'incorrect') : 'unanswered'
+                      }`}
+                    >
+                      <span className="question-number">{index + 1}</span>
+                      {isAnswered && (
+                        <span className="question-status-icon">
+                          {isCorrect ? '✓' : '✕'}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
