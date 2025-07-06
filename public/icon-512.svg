@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Fundo azul -->
+  <rect width="512" height="512" fill="#0ea5e9" rx="64"/>
+  
+  <!-- Ícone de questão/documento -->
+  <g transform="translate(86, 86)">
+    <!-- Documento -->
+    <rect x="52" y="52" width="236" height="300" fill="white" rx="20"/>
+    <rect x="52" y="52" width="236" height="64" fill="#e0f2fe" rx="20 20 0 0"/>
+    
+    <!-- Linhas do texto -->
+    <rect x="84" y="140" width="172" height="8" fill="#cbd5e1" rx="4"/>
+    <rect x="84" y="164" width="128" height="8" fill="#cbd5e1" rx="4"/>
+    <rect x="84" y="188" width="150" height="8" fill="#cbd5e1" rx="4"/>
+    
+    <!-- Alternativas (círculos) -->
+    <circle cx="96" cy="232" r="10" fill="#0ea5e9"/>
+    <rect x="124" y="224" width="86" height="8" fill="#cbd5e1" rx="4"/>
+    
+    <circle cx="96" cy="268" r="10" fill="#cbd5e1"/>
+    <rect x="124" y="260" width="75" height="8" fill="#cbd5e1" rx="4"/>
+    
+    <circle cx="96" cy="304" r="10" fill="#cbd5e1"/>
+    <rect x="124" y="296" width="96" height="8" fill="#cbd5e1" rx="4"/>
+    
+    <circle cx="96" cy="340" r="10" fill="#cbd5e1"/>
+    <rect x="124" y="332" width="82" height="8" fill="#cbd5e1" rx="4"/>
+  </g>
+  
+  <!-- Texto DP-300 -->
+  <text x="256" y="440" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="42" font-weight="bold">DP-300</text>
+</svg>

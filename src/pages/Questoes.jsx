@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useOffline } from '../hooks/useOffline';
 import { collection, getDocs, doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { PageTitle } from '../components/PageTitle';
@@ -11,12 +12,15 @@ import {
   XMarkIcon,
   ChatBubbleLeftRightIcon,
   EyeIcon,
-  EyeSlashIcon
+  EyeSlashIcon,
+  WifiIcon,
+  SignalSlashIcon
 } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 
 export default function Questoes() {
   const { currentUser } = useAuth();
+  const { isOnline, isOffline, pendingCount, offlineSync } = useOffline();
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState([]); // Mudança: array para múltiplas seleções
@@ -35,20 +39,44 @@ export default function Questoes() {
       try {
         setLoading(true);
         
-        // Buscar questões
-        const questionsRef = collection(db, 'questoes');
-        const questionsSnapshot = await getDocs(questionsRef);
+        let questionsData = [];
         
-        const questionsData = [];
-        questionsSnapshot.forEach(doc => {
-          questionsData.push({
-            id: doc.id,
-            ...doc.data()
-          });
-        });
+        if (isOnline) {
+          try {
+            // Tentar buscar do Firebase quando online
+            const questionsRef = collection(db, 'questoes');
+            const questionsSnapshot = await getDocs(questionsRef);
+            
+            questionsSnapshot.forEach(doc => {
+              questionsData.push({
+                id: doc.id,
+                ...doc.data()
+              });
+            });
+
+            // Cachear questões para uso offline
+            if (questionsData.length > 0 && offlineSync) {
+              await offlineSync.cacheQuestions(questionsData);
+            }
+          } catch (error) {
+            console.error('Erro ao buscar questões online:', error);
+            // Se falhar online, tentar cache
+            if (offlineSync) {
+              questionsData = await offlineSync.getCachedQuestions();
+            }
+          }
+        } else {
+          // Se offline, usar cache
+          if (offlineSync) {
+            questionsData = await offlineSync.getCachedQuestions();
+          }
+        }
 
         if (questionsData.length === 0) {
-          setError('Nenhuma questão encontrada. Entre em contato com o administrador.');
+          setError(isOffline ? 
+            'Nenhuma questão em cache. Conecte-se à internet para baixar questões.' :
+            'Nenhuma questão encontrada. Entre em contato com o administrador.'
+          );
           return;
         }
 
@@ -56,15 +84,26 @@ export default function Questoes() {
 
         // Buscar respostas do usuário
         if (currentUser) {
-          const answersRef = collection(db, 'usuarios', currentUser.uid, 'respostas');
-          const answersSnapshot = await getDocs(answersRef);
-          
-          const answersData = {};
-          answersSnapshot.forEach(doc => {
-            answersData[doc.id] = doc.data();
-          });
-          
-          setUserAnswers(answersData);
+          if (isOnline) {
+            try {
+              const answersRef = collection(db, 'usuarios', currentUser.uid, 'respostas');
+              const answersSnapshot = await getDocs(answersRef);
+              
+              const answersData = {};
+              answersSnapshot.forEach(doc => {
+                answersData[doc.id] = doc.data();
+              });
+              
+              setUserAnswers(answersData);
+            } catch (error) {
+              console.error('Erro ao buscar respostas online:', error);
+              // Usar dados offline se disponível
+              setUserAnswers({});
+            }
+          } else {
+            // Offline: usar dados locais (implementar se necessário)
+            setUserAnswers({});
+          }
         }
 
       } catch (error) {
@@ -76,7 +115,7 @@ export default function Questoes() {
     }
     
     loadQuestionsOnMount();
-  }, [currentUser]);
+  }, [currentUser, isOnline, isOffline, offlineSync]);
 
   useEffect(() => {
     if (currentQuestion) {
@@ -115,57 +154,76 @@ export default function Questoes() {
         isCorrect = selectedAnswers.length === 1 && selectedAnswers[0] === currentQuestion.respostaCorreta;
       }
       
-      // Verificar se já existe resposta anterior para esta questão
-      let existingAnswer = null;
-      try {
-        const existingDoc = await getDoc(doc(db, 'usuarios', currentUser.uid, 'respostas', currentQuestion.id));
-        if (existingDoc.exists()) {
-          existingAnswer = existingDoc.data();
-        }
-      } catch {
-        // Documento não existe ainda
+      // Salvar resposta usando sistema offline (se disponível)
+      if (offlineSync) {
+        await offlineSync.saveAnswerOffline(
+          currentQuestion.id,
+          selectedAnswers,
+          isCorrect,
+          currentUser.uid
+        );
       }
 
-      const answerData = {
-        questionId: currentQuestion.id,
-        questionText: currentQuestion.enunciado,
-        selectedAnswer: selectedAnswers,
-        correctAnswer: currentQuestion.respostasCorretas || [currentQuestion.respostaCorreta],
-        correct: isCorrect,
-        answeredAt: new Date(),
-        alternatives: currentQuestion.alternativas,
-        // Incrementar contador de erros apenas se errou
-        errorCount: !isCorrect ? (existingAnswer?.errorCount || 0) + 1 : 0
-      };
+      // Se online, tentar salvar diretamente no Firebase também
+      if (isOnline) {
+        try {
+          // Verificar se já existe resposta anterior para esta questão
+          let existingAnswer = null;
+          try {
+            const existingDoc = await getDoc(doc(db, 'usuarios', currentUser.uid, 'respostas', currentQuestion.id));
+            if (existingDoc.exists()) {
+              existingAnswer = existingDoc.data();
+            }
+          } catch {
+            // Documento não existe ainda
+          }
 
-      // Salvar tentativa no histórico (sempre salva, para contar todas as tentativas)
-      const attemptData = {
-        questionId: currentQuestion.id,
-        questionText: currentQuestion.enunciado,
-        selectedAnswer: selectedAnswers,
-        correctAnswer: currentQuestion.respostasCorretas || [currentQuestion.respostaCorreta],
-        correct: isCorrect,
-        answeredAt: new Date()
-      };
+          const answerData = {
+            questionId: currentQuestion.id,
+            questionText: currentQuestion.enunciado,
+            selectedAnswer: selectedAnswers,
+            correctAnswer: currentQuestion.respostasCorretas || [currentQuestion.respostaCorreta],
+            correct: isCorrect,
+            answeredAt: new Date(),
+            alternatives: currentQuestion.alternativas,
+            // Incrementar contador de erros apenas se errou
+            errorCount: !isCorrect ? (existingAnswer?.errorCount || 0) + 1 : 0
+          };
 
-      // Salvar tentativa no histórico com ID único baseado em timestamp
-      const attemptId = `${currentQuestion.id}_${Date.now()}`;
-      await setDoc(
-        doc(db, 'usuarios', currentUser.uid, 'tentativas', attemptId),
-        attemptData
-      );
+          // Salvar tentativa no histórico (sempre salva, para contar todas as tentativas)
+          const attemptData = {
+            questionId: currentQuestion.id,
+            questionText: currentQuestion.enunciado,
+            selectedAnswer: selectedAnswers,
+            correctAnswer: currentQuestion.respostasCorretas || [currentQuestion.respostaCorreta],
+            correct: isCorrect,
+            answeredAt: new Date()
+          };
 
-      // Salvar ou atualizar resposta única (para revisão)
-      await setDoc(
-        doc(db, 'usuarios', currentUser.uid, 'respostas', currentQuestion.id),
-        answerData
-      );
+          // Salvar tentativa no histórico com ID único baseado em timestamp
+          const attemptId = `${currentQuestion.id}_${Date.now()}`;
+          await setDoc(
+            doc(db, 'usuarios', currentUser.uid, 'tentativas', attemptId),
+            attemptData
+          );
 
-      // Atualizar estado local
-      setUserAnswers(prev => ({
-        ...prev,
-        [currentQuestion.id]: { ...answerData, answered: true }
-      }));
+          // Salvar ou atualizar resposta única (para revisão)
+          await setDoc(
+            doc(db, 'usuarios', currentUser.uid, 'respostas', currentQuestion.id),
+            answerData
+          );
+
+          // Atualizar estado local apenas se conseguiu salvar online
+          setUserAnswers(prev => ({
+            ...prev,
+            [currentQuestion.id]: { ...answerData, answered: true }
+          }));
+
+        } catch (onlineError) {
+          console.warn('Erro ao salvar online, mas salvo offline:', onlineError);
+          // Continua normalmente, pois foi salvo offline
+        }
+      }
 
       setShowResult(true);
 
@@ -300,6 +358,31 @@ export default function Questoes() {
               <span className="text-sm text-gray-600">
                 Questão {currentQuestionIndex + 1} de {questions.length}
               </span>
+              
+              {/* Indicador de status offline/online */}
+              <div className={`offline-indicator ${isOffline ? 'offline' : 'online'}`}>
+                {isOffline ? (
+                  <>
+                    <SignalSlashIcon className="h-4 w-4" />
+                    <span className="text-xs">Offline</span>
+                    {pendingCount > 0 && (
+                      <span className="sync-queue-badge">
+                        {pendingCount}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <WifiIcon className="h-4 w-4" />
+                    <span className="text-xs">Online</span>
+                    {pendingCount > 0 && (
+                      <span className="sync-queue-badge syncing">
+                        Sincronizando {pendingCount}
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
 
             <div className="question-status">

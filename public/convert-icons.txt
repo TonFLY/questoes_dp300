@@ -1,0 +1,9 @@
+<!-- Para criar os ícones PNG, use um conversor online como:
+1. https://cloudconvert.com/svg-to-png
+2. https://convertio.co/svg-png/
+3. Ou use este comando no terminal se tiver ImageMagick:
+   convert icon-192.svg icon-192.png
+   convert icon-512.svg icon-512.png
+
+Como alternativa temporária, vou criar ícones usando canvas/base64
+-->

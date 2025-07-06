@@ -9,9 +9,10 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../services/firebase';
-import { AuthContext } from './AuthContextType';
+import { AuthContext } from './AuthContextType.js';
 
 export function AuthProvider({ children }) {
+  console.log('🔐 AuthProvider inicializando');
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState(null);
@@ -73,7 +74,9 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
+    console.log('🔐 AuthProvider: Configurando listener de auth');
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log('🔐 AuthProvider: Auth state changed:', !!user);
       setCurrentUser(user);
       if (user) {
         await fetchUserProfile(user.uid);
@@ -81,6 +84,7 @@ export function AuthProvider({ children }) {
         setUserProfile(null);
       }
       setLoading(false);
+      console.log('🔐 AuthProvider: Loading concluído');
     });
 
     return unsubscribe;
@@ -96,9 +100,20 @@ export function AuthProvider({ children }) {
     fetchUserProfile
   };
 
+  console.log('🔐 AuthProvider: Renderizando, loading:', loading);
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {loading ? (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '100vh',
+          fontSize: '18px'
+        }}>
+          Carregando...
+        </div>
+      ) : children}
     </AuthContext.Provider>
   );
 }
