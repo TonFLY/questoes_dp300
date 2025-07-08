@@ -1,6 +1,6 @@
 // Sistema de Sincronização Offline Simplificado
 import { db } from './firebase';
-import { doc, setDoc, collection, addDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 
 class SimplifiedOfflineSync {
   constructor() {
@@ -240,18 +240,7 @@ class SimplifiedOfflineSync {
 
   async syncSingleAnswer(answerData) {
     try {
-      // Salvar tentativa no histórico
-      const attemptData = {
-        questionId: answerData.question_id,
-        userId: answerData.user_id,
-        selectedAnswers: answerData.selected_answers,
-        isCorrect: answerData.is_correct,
-        answeredAt: new Date(answerData.timestamp)
-      };
-      
-      await addDoc(collection(db, 'usuarios', answerData.user_id, 'tentativas'), attemptData);
-      
-      // Salvar resposta para revisão
+      // Salvar apenas resposta para revisão (não duplicar tentativas)
       await setDoc(
         doc(db, 'usuarios', answerData.user_id, 'respostas', answerData.question_id),
         {

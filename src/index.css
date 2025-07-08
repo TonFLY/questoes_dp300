@@ -141,6 +141,68 @@
   box-sizing: border-box;
 }
 
+/* Correções para ícones SVG no Firefox */
+svg {
+  display: inline-block;
+  vertical-align: middle;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 0;
+  width: 1em;
+  height: 1em;
+}
+
+/* Heroicons específicos - correção Firefox */
+.heroicon {
+  display: inline-block;
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* Ícones em botões */
+.btn svg,
+.alternative-button svg,
+.question-nav-item svg {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* Ícones pequenos */
+.btn-sm svg {
+  width: 1rem;
+  height: 1rem;
+  stroke-width: 2;
+}
+
+/* Correção específica para Firefox */
+@supports (-moz-appearance: none) {
+  svg {
+    display: inline-block !important;
+    vertical-align: middle !important;
+  }
+  
+  .btn svg,
+  .alternative-button svg {
+    display: inline-block !important;
+    vertical-align: text-bottom !important;
+  }
+}
+
 html {
   font-family: var(--font-family-primary);
   line-height: 1.6;
@@ -591,24 +653,83 @@ p {
   padding-bottom: 0.5rem;
 }
 
-.question-number {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin: 0 0 0.25rem 0;
+.question-review-item.clickable {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  background: var(--bg-card);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  position: relative;
 }
 
-.question-text {
+.question-review-item.clickable:hover {
+  border-color: var(--primary-300);
+  background: var(--primary-50);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.question-review-item.clickable:active {
+  transform: translateY(0);
+}
+
+.review-action {
+  position: absolute;
+  top: var(--spacing-lg);
+  right: var(--spacing-lg);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.question-review-item.clickable:hover .review-action {
+  opacity: 1;
+}
+
+.action-hint {
+  font-size: var(--font-size-sm);
+  color: var(--primary-600);
   font-weight: 500;
+}
+
+/* Melhorar espaçamento dos textos */
+.question-review-item .question-number {
+  font-weight: 600;
+  color: var(--primary-600);
+  margin-bottom: var(--spacing-sm);
+}
+
+.question-review-item .question-text {
   color: var(--text-primary);
-  margin: 0 0 0.5rem 0;
+  margin-bottom: var(--spacing-sm);
+  line-height: 1.5;
 }
 
-.question-result {
-  font-size: 0.875rem;
-  color: var(--error-600);
-  margin: 0;
+.question-review-item .question-result {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-family: 'Courier New', monospace;
 }
 
+/* Responsividade para mobile */
+@media (max-width: 768px) {
+  .question-review-item.clickable {
+    padding: var(--spacing-md);
+  }
+  
+  .review-action {
+    position: static;
+    opacity: 1;
+    margin-top: var(--spacing-sm);
+  }
+  
+  .action-hint {
+    font-size: var(--font-size-xs);
+  }
+}
 /* Actions Grid */
 .actions-grid {
   display: grid;
@@ -761,83 +882,187 @@ p {
 
 /* Touch-friendly adjustments para mobile */
 @media (max-width: 768px) {
+  /* ESCONDER SIDEBAR EM MOBILE - usar apenas navegação inferior */
+  .questions-sidebar {
+    display: none !important;
+  }
+  
+  /* Layout mobile - grid simples de uma coluna */
+  .questions-container {
+    padding: var(--spacing-sm);
+    max-width: 100%;
+  }
+  
+  .questions-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0;
+    min-height: auto;
+  }
+  
+  /* Main content ocupa toda largura e altura */
+  .questions-main-content {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+    margin: 0;
+  }
+  .questions-main {
+    order: 1;
+    gap: var(--spacing-lg);
+  }
+  
   /* Aumentar área de toque dos botões */
   .alternative-button {
     min-height: 56px; /* Padrão de acessibilidade para toque */
-  }
-  
-  .question-nav-item {
-    min-height: 44px; /* Área mínima recomendada para toque */
-    min-width: 44px;
+    padding: var(--spacing-lg) var(--spacing-md);
+    font-size: var(--font-size-base);
   }
   
   .btn {
     min-height: 48px;
     padding: var(--spacing-md) var(--spacing-lg);
+    font-size: var(--font-size-base);
   }
   
   .btn-sm {
     min-height: 40px;
     padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-sm);
   }
   
   /* Melhorar espaçamento para dedos */
   .question-alternatives {
     gap: var(--spacing-lg); /* Mais espaço entre alternativas */
+    padding: 0 var(--spacing-md);
   }
   
   /* Botões de ação maiores */
   .result-actions .btn {
     width: 100%;
     justify-content: center;
+    margin-bottom: var(--spacing-sm);
   }
   
   /* Comentário mais legível */
   .question-comment {
     font-size: var(--font-size-sm);
     line-height: 1.6;
+    padding: var(--spacing-lg);
+    margin: var(--spacing-lg) 0;
   }
   
-  /* Sidebar mais compacta mas ainda tocável */
-  .sidebar-title {
-    font-size: var(--font-size-base);
+  /* Ícones mais visíveis em mobile */
+  .btn svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+  
+  .btn-sm svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+  
+  /* Botões de navegação maiores */
+  .question-navigation .btn {
+    padding: var(--spacing-lg);
+    min-width: 120px;
+  }
+  
+  .question-content {
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  /* Header da questão mais compacto */
+  .question-header {
+    padding: var(--spacing-md);
     margin-bottom: var(--spacing-md);
   }
 }
 
 /* Ajustes para telas muito pequenas */
 @media (max-width: 360px) {
+  /* Sidebar continua escondida */
+  .questions-sidebar {
+    display: none !important;
+  }
+  
   .questions-container {
     padding: var(--spacing-xs);
   }
   
   .question-header {
     padding: var(--spacing-sm);
+    font-size: var(--font-size-sm);
   }
   
   .question-alternatives {
     padding: 0 var(--spacing-sm);
+    gap: var(--spacing-md);
   }
   
   .alternative-button {
-    padding: var(--spacing-sm);
-    min-height: 52px;
+    padding: var(--spacing-md) var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    min-height: 48px;
   }
   
   .alternative-text {
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     line-height: 1.4;
   }
   
-  .questions-list {
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--spacing-xs);
+  .btn {
+    min-height: 44px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-sm);
   }
   
-  .question-nav-item {
-    width: 38px;
-    height: 38px;
-    font-size: var(--font-size-xs);
+  .question-navigation {
+    gap: var(--spacing-sm);
+    flex-direction: column;
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-md);
+  }
+  
+  .question-navigation .btn {
+    width: 100%;
+    max-width: 200px;
+    padding: var(--spacing-md) var(--spacing-sm);
+  }
+  
+  /* Ícones menores em telas pequenas */
+  .btn svg {
+    width: 1rem;
+    height: 1rem;
+  }
+  
+  /* Conteúdo da questão mais compacto */
+  .question-content {
+    padding: var(--spacing-md);
+  }
+  
+  .question-text {
+    font-size: var(--font-size-base);
+  }
+}
+
+/* Ajustes para paisagem em mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  /* Sidebar continua escondida em paisagem */
+  .questions-sidebar {
+    display: none !important;
+  }
+  
+  .question-content {
+    padding: var(--spacing-md);
+  }
+  
+  .alternative-button {
+    min-height: 44px;
+    padding: var(--spacing-sm) var(--spacing-md);
   }
 }
 
@@ -2082,4 +2307,168 @@ select.form-control {
     font-size: var(--font-size-xs);
     padding: var(--spacing-sm) var(--spacing-md);
   }
+}
+
+/* Correções adicionais para Firefox e responsividade */
+
+/* Melhor suporte para flex em botões com ícones */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  user-select: none;
+  border: none;
+  border-radius: var(--border-radius-md);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  text-decoration: none;
+  line-height: 1;
+}
+
+/* Correção para ícones em linha */
+.btn svg,
+.alternative-button svg {
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+/* Fallback para navegadores que não suportam CSS Grid */
+.questions-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: var(--spacing-sm);
+}
+
+@supports not (display: grid) {
+  .questions-list {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  .question-nav-item {
+    flex: 0 0 auto;
+    margin: var(--spacing-xs);
+  }
+}
+
+/* Melhor handling de overflow em mobile */
+.question-content {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+.alternative-text {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Melhorar touch targets em mobile */
+@media (pointer: coarse) {
+  .btn,
+  .alternative-button,
+  .question-nav-item {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .btn-sm {
+    min-height: 36px;
+    min-width: 36px;
+  }
+}
+
+/* Melhorar contraste em modo escuro do sistema */
+@media (prefers-color-scheme: dark) {
+  .offline-indicator {
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+  }
+  
+  .offline-notification {
+    background: rgba(0, 0, 0, 0.9) !important;
+    color: white !important;
+  }
+}
+
+/* Evitar quebras de layout em containers flexíveis */
+.question-navigation,
+.result-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+  .question-navigation,
+  .result-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .question-navigation .btn,
+  .result-actions .btn {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+/* Melhorar navegação inferior em mobile */
+.question-navigation {
+  padding: var(--spacing-lg);
+  background: var(--bg-card);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-lg);
+  margin-top: var(--spacing-lg);
+  position: sticky;
+  bottom: var(--spacing-sm);
+  z-index: 100;
+  border: 1px solid var(--border-color);
+}
+
+.question-navigation .btn {
+  flex: 1;
+  max-width: none;
+}
+
+/* Melhorar área do conteúdo da questão */
+.question-card {
+  margin-bottom: var(--spacing-xl);
+  border-radius: var(--border-radius-lg);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+}
+
+.question-content {
+  padding: var(--spacing-xl);
+}
+
+.question-text {
+  font-size: var(--font-size-lg);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-xl);
+}
+
+/* Melhorar alternativas */
+.question-alternatives {
+  padding: 0;
+  gap: var(--spacing-md);
+}
+
+.alternative-button {
+  border-radius: var(--border-radius-md);
+  transition: all var(--transition-fast);
+}
+
+.alternative-button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }

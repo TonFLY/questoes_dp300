@@ -82,6 +82,20 @@ export default function Questoes() {
 
         setQuestions(questionsData);
 
+        // Verificar se há parâmetro "goto" na URL para navegar para questão específica
+        const urlParams = new URLSearchParams(window.location.search);
+        const gotoQuestionId = urlParams.get('goto');
+        
+        if (gotoQuestionId) {
+          // Encontrar o índice da questão específica
+          const questionIndex = questionsData.findIndex(q => q.id === gotoQuestionId);
+          if (questionIndex !== -1) {
+            setCurrentQuestionIndex(questionIndex);
+            // Limpar parâmetro da URL sem recarregar a página
+            window.history.replaceState({}, '', window.location.pathname);
+          }
+        }
+
         // Buscar respostas do usuário
         if (currentUser) {
           if (isOnline) {
@@ -146,13 +160,20 @@ export default function Questoes() {
         // Formato novo: múltiplas respostas corretas
         // Deve selecionar EXATAMENTE as respostas corretas (nem mais, nem menos)
         const correctAnswers = [...currentQuestion.respostasCorretas].sort();
-        const userAnswers = [...selectedAnswers].sort();
-        isCorrect = correctAnswers.length === userAnswers.length && 
-                   correctAnswers.every((answer, index) => answer === userAnswers[index]);
+        const userSelectedAnswers = [...selectedAnswers].sort(); // Renomeado para evitar conflito
+        isCorrect = correctAnswers.length === userSelectedAnswers.length && 
+                   correctAnswers.every((answer, index) => answer === userSelectedAnswers[index]);
       } else if (currentQuestion.respostaCorreta) {
         // Formato antigo: uma resposta correta
         isCorrect = selectedAnswers.length === 1 && selectedAnswers[0] === currentQuestion.respostaCorreta;
       }
+      
+      console.log('🔍 Debug resposta:', {
+        questionId: currentQuestion.id,
+        selectedAnswers,
+        correctAnswers: currentQuestion.respostasCorretas || [currentQuestion.respostaCorreta],
+        isCorrect
+      });
       
       // Salvar resposta usando sistema offline (se disponível)
       if (offlineSync) {
@@ -350,7 +371,7 @@ export default function Questoes() {
         <div className="container">
           <div className="questions-nav">
             <Link to="/dashboard" className="btn btn-secondary btn-sm">
-              <HomeIcon className="h-4 w-4 mr-2" />
+              <HomeIcon className="heroicon h-4 w-4 mr-2" />
               Dashboard
             </Link>
             
@@ -363,7 +384,7 @@ export default function Questoes() {
               <div className={`offline-indicator ${isOffline ? 'offline' : 'online'}`}>
                 {isOffline ? (
                   <>
-                    <SignalSlashIcon className="h-4 w-4" />
+                    <SignalSlashIcon className="heroicon h-4 w-4" />
                     <span className="text-xs">Offline</span>
                     {pendingCount > 0 && (
                       <span className="sync-queue-badge">
@@ -373,7 +394,7 @@ export default function Questoes() {
                   </>
                 ) : (
                   <>
-                    <WifiIcon className="h-4 w-4" />
+                    <WifiIcon className="heroicon h-4 w-4" />
                     <span className="text-xs">Online</span>
                     {pendingCount > 0 && (
                       <span className="sync-queue-badge syncing">
@@ -390,12 +411,12 @@ export default function Questoes() {
                 <span className={`status-badge ${userAnswers[currentQuestion.id].correct ? 'correct' : 'incorrect'}`}>
                   {userAnswers[currentQuestion.id].correct ? (
                     <>
-                      <CheckIcon className="h-4 w-4" />
+                      <CheckIcon className="heroicon h-4 w-4" />
                       Correto
                     </>
                   ) : (
                     <>
-                      <XMarkIcon className="h-4 w-4" />
+                      <XMarkIcon className="heroicon h-4 w-4" />
                       Incorreto
                     </>
                   )}
@@ -432,9 +453,9 @@ export default function Questoes() {
                       {isAnswered && (
                         <span className="question-status-icon">
                           {isCorrect ? (
-                            <CheckIcon className="h-3 w-3" />
+                            <CheckIcon className="heroicon h-3 w-3" />
                           ) : (
-                            <XMarkIcon className="h-3 w-3" />
+                            <XMarkIcon className="heroicon h-3 w-3" />
                           )}
                         </span>
                       )}
@@ -527,7 +548,7 @@ export default function Questoes() {
                           onClick={() => setShowComment(!showComment)}
                           className="btn btn-secondary"
                         >
-                          <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2" />
+                          <ChatBubbleLeftRightIcon className="heroicon h-4 w-4 mr-2" />
                           {showComment ? 'Ocultar' : 'Ver'} Comentário
                         </button>
                         
@@ -559,7 +580,7 @@ export default function Questoes() {
                 disabled={currentQuestionIndex === 0}
                 className="btn btn-secondary"
               >
-                <ChevronLeftIcon className="h-4 w-4 mr-2" />
+                <ChevronLeftIcon className="heroicon h-4 w-4 mr-2" />
                 Anterior
               </button>
 
@@ -573,7 +594,7 @@ export default function Questoes() {
                 className="btn btn-secondary"
               >
                 Próxima
-                <ChevronRightIcon className="h-4 w-4 ml-2" />
+                <ChevronRightIcon className="heroicon h-4 w-4 ml-2" />
               </button>
             </div>
           </main>

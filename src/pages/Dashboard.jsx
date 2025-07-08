@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { PageTitle } from '../components/PageTitle';
+import { ShareApp } from '../components/ShareApp';
 
 // Importar utilitário de limpeza
 import { limpezaCompleta } from '../utils/limpeza';
@@ -24,6 +25,12 @@ export default function Dashboard() {
       window.limparDadosUsuario = () => limpezaCompleta(currentUser.uid);
     }
   }, [currentUser]);
+
+  // Função para navegar para uma questão específica
+  const goToSpecificQuestion = (questionId) => {
+    // Redirecionar para página de questões com parâmetro para questão específica
+    window.location.href = `/questoes?goto=${questionId}`;
+  };
 
   useEffect(() => {
     async function loadUserStats() {
@@ -118,6 +125,8 @@ export default function Dashboard() {
                 Criar Questões
               </button>
               
+              <ShareApp />
+              
               <button
                 onClick={logout}
                 className="btn btn-secondary"
@@ -199,13 +208,21 @@ export default function Dashboard() {
             <div className="card-body">
               <div className="space-y-4">
                 {wrongQuestions.slice(0, 5).map((question, index) => (
-                  <div key={question.id} className="question-review-item">
+                  <button 
+                    key={question.id} 
+                    onClick={() => goToSpecificQuestion(question.questionId)}
+                    className="question-review-item clickable"
+                  >
                     <p className="question-number">Questão {index + 1}</p>
                     <p className="question-text">{question.questionText || 'Questão sem texto'}</p>
                     <p className="question-result">
-                      Sua resposta: {question.selectedAnswer} | Correta: {question.correctAnswer}
+                      Sua resposta: {Array.isArray(question.selectedAnswer) ? question.selectedAnswer.join(', ') : question.selectedAnswer} | 
+                      Correta: {Array.isArray(question.correctAnswer) ? question.correctAnswer.join(', ') : question.correctAnswer}
                     </p>
-                  </div>
+                    <div className="review-action">
+                      <span className="action-hint">Clique para revisar →</span>
+                    </div>
+                  </button>
                 ))}
                 
                 {wrongQuestions.length > 5 && (
@@ -239,15 +256,6 @@ export default function Dashboard() {
             <span className="action-icon">🕒</span>
             <h3 className="action-title">Revisar Erros</h3>
             <p className="action-description">Revise questões que você errou anteriormente</p>
-          </button>
-
-          <button 
-            onClick={() => window.location.href = '/estatisticas'}
-            className="action-card"
-          >
-            <span className="action-icon">📊</span>
-            <h3 className="action-title">Estatísticas</h3>
-            <p className="action-description">Veja seu progresso detalhado por tópico</p>
           </button>
         </div>
       </main>
