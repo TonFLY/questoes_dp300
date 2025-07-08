@@ -33,9 +33,9 @@ export function ShareApp() {
     <>
       <button
         onClick={() => setShowModal(true)}
-        className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+        className="btn btn-secondary"
       >
-        <ShareIcon className="w-5 h-5" />
+        <ShareIcon className="heroicon" />
         Compartilhar App
       </button>
 
@@ -46,7 +46,8 @@ export function ShareApp() {
               <h3 className="text-lg font-semibold">Compartilhar App</h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="btn btn-secondary btn-sm"
+                style={{ padding: '0.5rem' }}
               >
                 ✕
               </button>
@@ -69,9 +70,10 @@ export function ShareApp() {
               <div className="space-y-2">
                 <button
                   onClick={handleShare}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                  className="btn btn-success"
+                  style={{ width: '100%' }}
                 >
-                  <ShareIcon className="w-5 h-5" />
+                  <ShareIcon className="heroicon" />
                   Compartilhar Link
                 </button>
 
@@ -80,16 +82,31 @@ export function ShareApp() {
                     navigator.clipboard.writeText(appUrl);
                     alert('Link copiado!');
                   }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+                  className="btn btn-secondary"
+                  style={{ width: '100%' }}
                 >
-                  📋 Copiar Link
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    strokeWidth="1.5" 
+                    stroke="currentColor" 
+                    className="heroicon"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.057 1.123-.08M15.75 18H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08M15.75 18.75v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5A3.375 3.375 0 006.375 7.5H5.25m11.9-3.664A2.251 2.251 0 0015 2.25h-1.5a2.251 2.251 0 00-2.15 1.586m5.8 0c.065.21.1.433.1.664v.75h-6V4.5c0-.231.035-.454.1-.664M6.75 7.5H4.875c-.621 0-1.125.504-1.125 1.125v12c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V16.5a9 9 0 00-9-9z" 
+                    />
+                  </svg>
+                  Copiar Link
                 </button>
               </div>
 
               {/* Instruções */}
               <div className="bg-blue-50 p-3 rounded-lg">
                 <h4 className="font-medium text-blue-800 mb-2 flex items-center gap-2">
-                  <DevicePhoneMobileIcon className="w-5 h-5" />
+                  <DevicePhoneMobileIcon className="heroicon" />
                   Como instalar no celular:
                 </h4>
                 <div className="text-sm text-blue-700 space-y-2">

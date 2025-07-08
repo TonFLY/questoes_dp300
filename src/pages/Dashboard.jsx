@@ -4,6 +4,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { PageTitle } from '../components/PageTitle';
 import { ShareApp } from '../components/ShareApp';
+import { ForumLinks } from '../components/ForumLinks';
 
 // Importar utilitário de limpeza
 import { limpezaCompleta } from '../utils/limpeza';
@@ -257,6 +258,11 @@ export default function Dashboard() {
             <h3 className="action-title">Revisar Erros</h3>
             <p className="action-description">Revise questões que você errou anteriormente</p>
           </button>
+        </div>
+
+        {/* Forum de Links */}
+        <div className="forum-section">
+          <ForumLinks />
         </div>
       </main>
     </div>
