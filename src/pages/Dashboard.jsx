@@ -48,31 +48,42 @@ export default function Dashboard() {
         
         let correct = 0;
         let wrong = 0;
-        const wrongQuestionsList = [];
-
-        // Contar todas as tentativas (incluindo múltiplas da mesma questão)
+        
+        // Contar tentativas corretas/incorretas
         attemptsSnapshot.forEach(doc => {
-          const attempt = doc.data();
-          if (attempt.correct) {
+          const data = doc.data();
+          if (data.correct) {
             correct++;
           } else {
             wrong++;
           }
         });
 
-        // Questões para revisão (apenas as que ainda estão erradas)
+        const total = correct + wrong;
+        const accuracy = total > 0 ? (correct / total) * 100 : 0;
+
+        // Coletar questões erradas para revisão
+        const wrongQuestionsList = [];
         answersSnapshot.forEach(doc => {
-          const answer = doc.data();
-          if (!answer.correct) {
+          const data = doc.data();
+          if (!data.correct) {
             wrongQuestionsList.push({
               id: doc.id,
-              ...answer
+              questionId: data.questionId,
+              questionText: data.questionText,
+              selectedAnswer: data.selectedAnswer,
+              correctAnswer: data.correctAnswer,
+              timestamp: data.timestamp
             });
           }
         });
 
-        const total = correct + wrong;
-        const accuracy = total > 0 ? (correct / total) * 100 : 0;
+        // Ordenar por timestamp mais recente
+        wrongQuestionsList.sort((a, b) => {
+          const timestampA = a.timestamp?.toDate?.() || new Date(a.timestamp || 0);
+          const timestampB = b.timestamp?.toDate?.() || new Date(b.timestamp || 0);
+          return timestampB - timestampA;
+        });
 
         setStats({
           totalQuestions: total,
@@ -148,7 +159,7 @@ export default function Dashboard() {
           <div className="stat-card">
             <div className="stat-content">
               <div className="stat-icon primary">
-                <span className="stat-icon">📚</span>
+                <span>📚</span>
               </div>
               <div className="stat-info">
                 <p className="stat-label">Total de Tentativas</p>
@@ -160,7 +171,7 @@ export default function Dashboard() {
           <div className="stat-card">
             <div className="stat-content">
               <div className="stat-icon success">
-                <span className="stat-icon text-green-600">✅</span>
+                <span>✅</span>
               </div>
               <div className="stat-info">
                 <p className="stat-label">Acertos</p>
@@ -172,7 +183,7 @@ export default function Dashboard() {
           <div className="stat-card">
             <div className="stat-content">
               <div className="stat-icon error">
-                <span className="stat-icon text-red-600">❌</span>
+                <span>❌</span>
               </div>
               <div className="stat-info">
                 <p className="stat-label">Erros</p>
@@ -184,7 +195,7 @@ export default function Dashboard() {
           <div className="stat-card">
             <div className="stat-content">
               <div className="stat-icon info">
-                <span className="stat-icon">📊</span>
+                <span>📊</span>
               </div>
               <div className="stat-info">
                 <p className="stat-label">Taxa de Acerto</p>
