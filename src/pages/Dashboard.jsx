@@ -251,10 +251,19 @@ export default function Dashboard() {
           </button>
 
           <button 
+            onClick={() => window.location.href = '/videoaulas'}
+            className="action-card"
+          >
+            <span className="action-icon">🎥</span>
+            <h3 className="action-title">Videoaulas</h3>
+            <p className="action-description">Assista videoaulas para aprofundar seus conhecimentos</p>
+          </button>
+
+          <button 
             onClick={() => window.location.href = '/revisao'}
             className="action-card"
           >
-            <span className="action-icon">🕒</span>
+            <span className="action-icon">�</span>
             <h3 className="action-title">Revisar Erros</h3>
             <p className="action-description">Revise questões que você errou anteriormente</p>
           </button>

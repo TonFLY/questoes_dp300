@@ -11,6 +11,7 @@ import Dashboard from './pages/Dashboard';
 import Questoes from './pages/Questoes';
 import Admin from './pages/Admin';
 import Revisao from './pages/Revisao';
+import Videoaulas from './pages/Videoaulas';
 
 console.log('📦 App: Dependências importadas');
 
@@ -63,6 +64,11 @@ function AppRoutes() {
       <Route path="/revisao" element={
         <ProtectedRoute>
           <Revisao />
+        </ProtectedRoute>
+      } />
+      <Route path="/videoaulas" element={
+        <ProtectedRoute>
+          <Videoaulas />
         </ProtectedRoute>
       } />
     </Routes>
