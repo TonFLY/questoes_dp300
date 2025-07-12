@@ -35,7 +35,7 @@ export function ShareApp() {
         onClick={() => setShowModal(true)}
         className="btn btn-secondary"
       >
-        <ShareIcon className="heroicon" />
+        <ShareIcon className="heroicon h-4 w-4 mr-2" />
         Compartilhar App
       </button>
 
